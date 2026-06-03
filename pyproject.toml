@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-trace-lite"
+version = "0.1.0"
+description = "Record simple agent spans and events to JSONL and summarize them."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "OSS Contributors" }]
+keywords = ["agents", "trace", "jsonl", "cli"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "License :: OSI Approved :: MIT License",
+]
+
+[project.scripts]
+agent-trace-lite = "agent_trace_lite.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.urls]
+Homepage = "https://github.com/mySebbe/agent-trace-lite"
+Repository = "https://github.com/mySebbe/agent-trace-lite"
+Issues = "https://github.com/mySebbe/agent-trace-lite/issues"
+Changelog = "https://github.com/mySebbe/agent-trace-lite/blob/main/CHANGELOG.md"
+
+[tool.setuptools.package-data]
+"agent_trace_lite" = ["py.typed"]
