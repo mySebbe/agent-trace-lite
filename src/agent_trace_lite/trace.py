@@ -118,19 +118,44 @@ def _find_span_start(path: Path, span_id: str) -> float | None:
 def summarize_trace(path: str) -> dict[str, Any]:
     """Summarize spans, events, errors, and completed span durations."""
     records = _iter_records(path)
+    started_ids = {
+        str(record.get("span_id"))
+        for record in records
+        if record.get("type") == "span_start" and record.get("span_id")
+    }
+    ended_ids = {
+        str(record.get("span_id"))
+        for record in records
+        if record.get("type") == "span_end" and record.get("span_id")
+    }
+    event_levels: dict[str, int] = {}
+    status_counts: dict[str, int] = {}
     spans = sum(1 for record in records if record.get("type") == "span_start")
-    events = sum(1 for record in records if record.get("type") == "event")
+    events = 0
+    for record in records:
+        if record.get("type") == "event":
+            events += 1
+            level = str(record.get("level") or "info")
+            event_levels[level] = event_levels.get(level, 0) + 1
     ended = [record for record in records if record.get("type") == "span_end"]
+    for record in ended:
+        status = str(record.get("status") or "unknown")
+        status_counts[status] = status_counts.get(status, 0) + 1
     errors = sum(1 for record in records if record.get("type") == "event" and record.get("level") == "error")
     errors += sum(1 for record in ended if record.get("status") == "error" or bool(record.get("error")))
     durations = [record.get("duration_ms") for record in ended if isinstance(record.get("duration_ms"), (int, float))]
+    total_duration = int(sum(durations))
     return {
         "spans": spans,
         "completed_spans": len(ended),
+        "open_spans": len(started_ids - ended_ids),
         "events": events,
         "errors": errors,
-        "total_duration_ms": int(sum(durations)),
+        "event_levels": dict(sorted(event_levels.items())),
+        "status_counts": dict(sorted(status_counts.items())),
+        "total_duration_ms": total_duration,
         "max_duration_ms": int(max(durations)) if durations else 0,
+        "avg_duration_ms": int(round(total_duration / len(durations))) if durations else 0,
     }
 
 
@@ -141,6 +166,7 @@ def render_summary(summary: dict[str, Any], output_format: str = "text") -> str:
         raise ValueError(f"unsupported output format: {output_format}")
     return (
         f"spans={summary['spans']} completed={summary['completed_spans']} "
-        f"events={summary['events']} errors={summary['errors']} "
-        f"total_duration_ms={summary['total_duration_ms']}\n"
+        f"open={summary.get('open_spans', 0)} events={summary['events']} "
+        f"errors={summary['errors']} total_duration_ms={summary['total_duration_ms']} "
+        f"avg_duration_ms={summary.get('avg_duration_ms', 0)}\n"
     )

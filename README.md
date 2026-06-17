@@ -2,6 +2,11 @@
 
 `agent-trace-lite` records simple agent spans and events to JSONL and summarizes durations and errors.
 
+## 0.1.1 Highlights
+
+- Trace summaries now report open spans, event levels, span status counts, and average duration.
+- Text output includes open-span and average-duration metrics for faster run comparison.
+
 ## Install
 
 ```bash

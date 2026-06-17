@@ -31,17 +31,24 @@ class TraceTests(unittest.TestCase):
     def test_summarize_trace_counts_spans_events_errors_and_duration(self):
         with tempfile.NamedTemporaryFile("w", delete=False, encoding="utf-8") as handle:
             handle.write(json.dumps({"type": "span_start", "span_id": "a", "name": "plan", "timestamp": 1.0}) + "\n")
+            handle.write(json.dumps({"type": "span_start", "span_id": "b", "name": "left-open", "timestamp": 1.5}) + "\n")
             handle.write(json.dumps({"type": "event", "level": "error", "timestamp": 2.0, "name": "boom"}) + "\n")
+            handle.write(json.dumps({"type": "event", "level": "info", "timestamp": 2.2, "name": "note"}) + "\n")
             handle.write(json.dumps({"type": "span_end", "span_id": "a", "status": "error", "timestamp": 3.25, "duration_ms": 2250}) + "\n")
             path = handle.name
         self.addCleanup(lambda: os.path.exists(path) and os.unlink(path))
 
         summary = summarize_trace(path)
 
-        self.assertEqual(summary["spans"], 1)
-        self.assertEqual(summary["events"], 1)
+        self.assertEqual(summary["spans"], 2)
+        self.assertEqual(summary["completed_spans"], 1)
+        self.assertEqual(summary["open_spans"], 1)
+        self.assertEqual(summary["events"], 2)
         self.assertEqual(summary["errors"], 2)
+        self.assertEqual(summary["event_levels"], {"error": 1, "info": 1})
+        self.assertEqual(summary["status_counts"], {"error": 1})
         self.assertEqual(summary["total_duration_ms"], 2250)
+        self.assertEqual(summary["avg_duration_ms"], 2250)
 
     def test_cli_summary_outputs_json(self):
         with tempfile.NamedTemporaryFile("w", delete=False, encoding="utf-8") as handle:
