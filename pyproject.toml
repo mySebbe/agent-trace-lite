@@ -4,17 +4,16 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agent-trace-lite"
-version = "0.1.1"
+version = "0.1.2"
 description = "Record simple agent spans and events to JSONL and summarize them."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { file = "LICENSE" }
+license = "MIT"
 authors = [{ name = "OSS Contributors" }]
 keywords = ["agents", "trace", "jsonl", "cli"]
 classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.11",
-  "License :: OSI Approved :: MIT License",
 ]
 
 [project.scripts]

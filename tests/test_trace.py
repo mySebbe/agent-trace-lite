@@ -7,7 +7,7 @@ import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from agent_trace_lite.trace import TraceRecorder, summarize_trace
+from agent_trace_lite.trace import TraceRecorder, render_summary, summarize_trace
 
 
 class TraceTests(unittest.TestCase):
@@ -49,6 +49,27 @@ class TraceTests(unittest.TestCase):
         self.assertEqual(summary["status_counts"], {"error": 1})
         self.assertEqual(summary["total_duration_ms"], 2250)
         self.assertEqual(summary["avg_duration_ms"], 2250)
+        self.assertEqual(summary["first_timestamp"], 1.0)
+        self.assertEqual(summary["last_timestamp"], 3.25)
+        self.assertEqual(summary["wall_time_ms"], 2250)
+
+    def test_markdown_summary_is_table_shaped(self):
+        rendered = render_summary(
+            {
+                "spans": 1,
+                "completed_spans": 1,
+                "open_spans": 0,
+                "events": 2,
+                "errors": 0,
+                "total_duration_ms": 500,
+                "avg_duration_ms": 500,
+                "wall_time_ms": 750,
+            },
+            "markdown",
+        )
+
+        self.assertIn("# Agent Trace Summary", rendered)
+        self.assertIn("| Wall time | 750 ms |", rendered)
 
     def test_cli_summary_outputs_json(self):
         with tempfile.NamedTemporaryFile("w", delete=False, encoding="utf-8") as handle:
@@ -69,6 +90,7 @@ class TraceTests(unittest.TestCase):
 
         self.assertEqual(completed.returncode, 0, completed.stderr)
         self.assertEqual(json.loads(completed.stdout)["total_duration_ms"], 1000)
+        self.assertEqual(json.loads(completed.stdout)["wall_time_ms"], 1000)
 
 
 if __name__ == "__main__":
