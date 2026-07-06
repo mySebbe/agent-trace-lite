@@ -35,7 +35,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     summary = subparsers.add_parser("summary", help="Summarize a trace file.")
     summary.add_argument("path")
-    summary.add_argument("--format", choices=("text", "json"), default="text")
+    summary.add_argument("--format", choices=("text", "json", "markdown"), default="text")
     return parser
 
 

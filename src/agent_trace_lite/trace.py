@@ -145,6 +145,13 @@ def summarize_trace(path: str) -> dict[str, Any]:
     errors += sum(1 for record in ended if record.get("status") == "error" or bool(record.get("error")))
     durations = [record.get("duration_ms") for record in ended if isinstance(record.get("duration_ms"), (int, float))]
     total_duration = int(sum(durations))
+    timestamps = [
+        float(record["timestamp"])
+        for record in records
+        if isinstance(record.get("timestamp"), (int, float))
+    ]
+    first_timestamp = min(timestamps) if timestamps else None
+    last_timestamp = max(timestamps) if timestamps else None
     return {
         "spans": spans,
         "completed_spans": len(ended),
@@ -156,17 +163,37 @@ def summarize_trace(path: str) -> dict[str, Any]:
         "total_duration_ms": total_duration,
         "max_duration_ms": int(max(durations)) if durations else 0,
         "avg_duration_ms": int(round(total_duration / len(durations))) if durations else 0,
+        "first_timestamp": first_timestamp,
+        "last_timestamp": last_timestamp,
+        "wall_time_ms": int(round((last_timestamp - first_timestamp) * 1000))
+        if first_timestamp is not None and last_timestamp is not None
+        else 0,
     }
 
 
 def render_summary(summary: dict[str, Any], output_format: str = "text") -> str:
     if output_format == "json":
         return json.dumps(summary, indent=2, sort_keys=True) + "\n"
+    if output_format == "markdown":
+        rows = [
+            ("Spans", summary["spans"]),
+            ("Completed spans", summary["completed_spans"]),
+            ("Open spans", summary.get("open_spans", 0)),
+            ("Events", summary["events"]),
+            ("Errors", summary["errors"]),
+            ("Total span duration", f"{summary['total_duration_ms']} ms"),
+            ("Average span duration", f"{summary.get('avg_duration_ms', 0)} ms"),
+            ("Wall time", f"{summary.get('wall_time_ms', 0)} ms"),
+        ]
+        lines = ["# Agent Trace Summary", "", "| Metric | Value |", "| --- | --- |"]
+        lines.extend(f"| {name} | {value} |" for name, value in rows)
+        return "\n".join(lines) + "\n"
     if output_format != "text":
         raise ValueError(f"unsupported output format: {output_format}")
     return (
         f"spans={summary['spans']} completed={summary['completed_spans']} "
         f"open={summary.get('open_spans', 0)} events={summary['events']} "
         f"errors={summary['errors']} total_duration_ms={summary['total_duration_ms']} "
-        f"avg_duration_ms={summary.get('avg_duration_ms', 0)}\n"
+        f"avg_duration_ms={summary.get('avg_duration_ms', 0)} "
+        f"wall_time_ms={summary.get('wall_time_ms', 0)}\n"
     )
