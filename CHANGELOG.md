@@ -6,7 +6,9 @@ The format is based on Keep a Changelog, and this project uses semantic versioni
 
 ## [Unreleased]
 
-- No unreleased changes yet.
+- Added bounded `validate` command with deterministic JSON diagnostics for malformed JSONL and invalid record fields.
+- Added duplicate, orphaned, and open span lifecycle detection with validation exit codes.
+- Added configurable physical-line and total-input byte limits.
 
 ## [0.1.2] - 2026-07-06
 
